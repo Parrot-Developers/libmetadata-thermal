@@ -256,6 +256,15 @@ struct tmeta_data {
 
 
 /**
+ * Key for thermal metadata ancillary data.
+ *
+ * This key is where thermal metadata should be stored on any type of
+ * mbuf_xxx_frame.
+ */
+extern TMETA_API const char *TMETA_MBUF_ANCILLARY_KEY;
+
+
+/**
  * Is this a thermal metadata user data SEI?
  * @param buf: pointer to the metadata buffer
  * @param buf_size: size in bytes of the metadata buffer

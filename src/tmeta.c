@@ -61,6 +61,9 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 #endif
 
 
+const char *TMETA_MBUF_ANCILLARY_KEY = "com.parrot.thermal.metadata";
+
+
 static const struct uuid {
 	uint32_t uuid0;
 	uint32_t uuid1;
