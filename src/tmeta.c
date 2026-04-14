@@ -64,12 +64,15 @@ ULOG_DECLARE_TAG(ULOG_TAG);
 const char *TMETA_MBUF_ANCILLARY_KEY = "com.parrot.thermal.metadata";
 
 
-static const struct uuid {
+struct uuid {
 	uint32_t uuid0;
 	uint32_t uuid1;
 	uint32_t uuid2;
 	uint32_t uuid3;
-} sei_uuid = {
+};
+
+
+static const struct uuid sei_uuid = {
 	TMETA_USER_DATA_SEI_UUID_0,
 	TMETA_USER_DATA_SEI_UUID_1,
 	TMETA_USER_DATA_SEI_UUID_2,
@@ -118,15 +121,15 @@ static void serialize_thermal_metadata(const struct tmeta_data *meta, void *buf)
 	*(uint32_t *)pb_buf = htonl(meta->jpeg_data_size);
 	pb_buf += sizeof(meta->jpeg_data_size);
 
-	*(uint32_t *)pb_buf = htonl((uint32_t)meta->value_min);
+	*(uint32_t *)pb_buf = htonl(meta->value_min);
 	pb_buf += sizeof(uint32_t);
-	*(uint32_t *)pb_buf = htonl((uint32_t)meta->value_max);
+	*(uint32_t *)pb_buf = htonl(meta->value_max);
 	pb_buf += sizeof(uint32_t);
 
 	memcpy(pb_buf, &meta->attitude_reference_quat, sizeof(float) * 4);
 	pb_buf += sizeof(float) * 4;
 
-	*(uint32_t *)pb_buf = htonl((uint32_t)meta->cam_angles_count);
+	*(uint32_t *)pb_buf = htonl(meta->cam_angles_count);
 	pb_buf += sizeof(uint32_t);
 
 	/* V0.1 camera angles data */
@@ -135,8 +138,7 @@ static void serialize_thermal_metadata(const struct tmeta_data *meta, void *buf)
 	       sizeof(float) * meta->cam_angles_count * 4);
 	pb_buf += sizeof(float) * meta->cam_angles_count * 4;
 
-	unsigned int i;
-	for (i = 0; i < meta->cam_angles_count; ++i) {
+	for (unsigned int i = 0; i < meta->cam_angles_count; ++i) {
 		*(uint64_t *)pb_buf =
 			htonll((uint64_t)meta->cam_angles_timestamps[i]);
 		pb_buf += sizeof(uint64_t);
@@ -161,7 +163,6 @@ static void serialize_thermal_metadata(const struct tmeta_data *meta, void *buf)
 
 	/* V0.4 thermal camera alignment quaternion */
 	memcpy(pb_buf, &meta->thermal_to_visible_quat, sizeof(float) * 4);
-	pb_buf += sizeof(float) * 4;
 }
 
 
@@ -170,7 +171,6 @@ static int deserialize_thermal_metadata(const void *buf,
 					struct tmeta_data *meta)
 {
 	const uint8_t *pb_buf = (const uint8_t *)buf;
-	unsigned int i;
 	unsigned int cam_angles_size;
 	unsigned int cam_angles_timestamps_size;
 
@@ -255,7 +255,7 @@ static int deserialize_thermal_metadata(const void *buf,
 	memcpy(&meta->cam_angles, pb_buf, cam_angles_size);
 	pb_buf += cam_angles_size;
 	_buf_size -= cam_angles_size;
-	for (i = 0; i < meta->cam_angles_count; ++i) {
+	for (unsigned int i = 0; i < meta->cam_angles_count; ++i) {
 		meta->cam_angles_timestamps[i] =
 			ntohll(*(const uint64_t *)pb_buf);
 		pb_buf += sizeof(uint64_t);
@@ -302,8 +302,6 @@ static int deserialize_thermal_metadata(const void *buf,
 		return -1;
 
 	memcpy(&meta->thermal_to_visible_quat, pb_buf, sizeof(float) * 4);
-	pb_buf += sizeof(float) * 4;
-	_buf_size -= sizeof(float) * 4;
 
 end:
 	return 0;
@@ -312,7 +310,10 @@ end:
 
 bool tmeta_is_thermal_metadata_user_data_sei(const void *buf, size_t buf_size)
 {
-	uint32_t uuid0, uuid1, uuid2, uuid3;
+	uint32_t uuid0;
+	uint32_t uuid1;
+	uint32_t uuid2;
+	uint32_t uuid3;
 	const uint32_t *pdw_buf = (uint32_t *)buf;
 
 	ULOG_ERRNO_RETURN_VAL_IF(buf == NULL, EINVAL, false);
