@@ -246,6 +246,13 @@ static int deserialize_thermal_metadata(const void *buf,
 	pb_buf += sizeof(uint32_t);
 	_buf_size -= sizeof(uint32_t);
 
+	/* Check camera angles count against the fixed-size struct arrays
+	 * before using it in any size computation, to avoid both an
+	 * out-of-bounds write into meta->cam_angles/cam_angles_timestamps and
+	 * a 32bit overflow of cam_angles_size/cam_angles_timestamps_size */
+	if (meta->cam_angles_count > TMETA_CAMANGLES_MAXCOUNT)
+		return -1;
+
 	/* Check v0.1 camera angles size */
 	cam_angles_size = sizeof(float) * meta->cam_angles_count * 4;
 	cam_angles_timestamps_size = meta->cam_angles_count * sizeof(uint64_t);
@@ -341,6 +348,10 @@ int tmeta_serialize_thermal_metadata_user_data_sei(
 {
 	ULOG_ERRNO_RETURN_ERR_IF(meta == NULL, EINVAL);
 	ULOG_ERRNO_RETURN_ERR_IF(buf == NULL, EINVAL);
+	ULOG_ERRNO_RETURN_ERR_IF(
+		meta->cam_angles_count > TMETA_CAMANGLES_MAXCOUNT, EINVAL);
+	ULOG_ERRNO_RETURN_ERR_IF(
+		meta->jpeg_data_size > 0 && meta->jpeg_data == NULL, EINVAL);
 
 	size_t _size = TMETA_BUF_SIZE(meta);
 	if (buf_size < _size)
@@ -371,7 +382,10 @@ int tmeta_deserialize_thermal_metadata_user_data_sei(const void *buf,
 
 enum tmeta_thermal_gain_mode tmeta_thermal_gain_mode_from_str(const char *str)
 {
-	if (strcasecmp(str, "FLIR_LOW_GAIN") == 0) {
+	if (str == NULL) {
+		ULOGW("%s: null gain mode string", __func__);
+		return TMETA_THERMAL_GAIN_MODE_FLIR_LOW_GAIN;
+	} else if (strcasecmp(str, "FLIR_LOW_GAIN") == 0) {
 		return TMETA_THERMAL_GAIN_MODE_FLIR_LOW_GAIN;
 	} else if (strcasecmp(str, "FLIR_HIGH_GAIN") == 0) {
 		return TMETA_THERMAL_GAIN_MODE_FLIR_HIGH_GAIN;
@@ -398,7 +412,10 @@ const char *tmeta_thermal_gain_mode_to_str(enum tmeta_thermal_gain_mode mode)
 enum tmeta_thermal_frame_state
 tmeta_thermal_frame_state_from_str(const char *str)
 {
-	if (strcasecmp(str, "VALID") == 0) {
+	if (str == NULL) {
+		ULOGW("%s: null frame state string", __func__);
+		return TMETA_THERMAL_FRAME_STATE_UNEXPECTED;
+	} else if (strcasecmp(str, "VALID") == 0) {
 		return TMETA_THERMAL_FRAME_STATE_VALID;
 	} else if (strcasecmp(str, "SHUTTER_DESIRED") == 0) {
 		return TMETA_THERMAL_FRAME_STATE_SHUTTER_DESIRED;

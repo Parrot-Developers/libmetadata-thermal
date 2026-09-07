@@ -25,3 +25,29 @@ ifeq ("$(TARGET_OS)","windows")
 endif
 
 include $(BUILD_LIBRARY)
+
+
+ifdef TARGET_TEST
+
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := tst-libmetadata-thermal
+
+LOCAL_SRC_FILES := \
+	tests/tmeta_test.c \
+	tests/tmeta_test_sei.c \
+	tests/tmeta_test_serialize.c \
+	tests/tmeta_test_deserialize.c \
+	tests/tmeta_test_roundtrip.c \
+	tests/tmeta_test_enum.c \
+	tests/tmeta_test_json.c
+
+LOCAL_LIBRARIES := \
+	libcunit \
+	libulog \
+	json \
+	libmetadata-thermal
+
+include $(BUILD_EXECUTABLE)
+
+endif
